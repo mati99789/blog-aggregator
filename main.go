@@ -13,11 +13,16 @@ import (
 
 func main() {
 	cfg, err := config.Read()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	db, err := sql.Open("postgres", cfg.DBUrl)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	defer db.Close()
 
 	dbQueries := database.New(db)
 
@@ -25,6 +30,7 @@ func main() {
 	cmds := NewCommands()
 
 	cmds.register("login", handlerLogin)
+	cmds.register("register", handlerRegister)
 
 	if len(os.Args) < 2 {
 		fmt.Fprintln(os.Stderr, "Usage: gator <command> [args...]")

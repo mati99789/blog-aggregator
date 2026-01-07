@@ -37,16 +37,6 @@ func Read() (*Config, error) {
 	return &config, nil
 }
 
-func getConfigFilePath() (string, error) {
-	home, error := os.UserHomeDir()
-
-	if error != nil {
-		return "", error
-	}
-
-	return fmt.Sprintf("%s/%s", home, configFileName), nil
-}
-
 func (cfg *Config) SetUser(name string) error {
 	cfg.CurrentUserName = name
 	return write(cfg)
@@ -76,4 +66,14 @@ func write(cfg *Config) error {
 	}
 
 	return nil
+}
+
+func getConfigFilePath() (string, error) {
+	home, error := os.UserHomeDir()
+
+	if error != nil {
+		return "", error
+	}
+
+	return fmt.Sprintf("%s/%s", home, configFileName), nil
 }
