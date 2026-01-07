@@ -2,17 +2,26 @@ package main
 
 import (
 	"blog_eggregator/internal/config"
+	"blog_eggregator/internal/database"
+	"database/sql"
 	"fmt"
+	"log"
 	"os"
+
+	_ "github.com/lib/pq"
 )
 
 func main() {
 	cfg, err := config.Read()
 
+	db, err := sql.Open("postgres", cfg.DBUrl)
 	if err != nil {
-		fmt.Fprint(os.Stderr, err)
+		log.Fatal(err)
 	}
-	state := NewState(cfg)
+
+	dbQueries := database.New(db)
+
+	state := NewState(cfg, dbQueries)
 	cmds := NewCommands()
 
 	cmds.register("login", handlerLogin)
