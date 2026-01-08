@@ -12,23 +12,23 @@ import (
 )
 
 const createFeed = `-- name: CreateFeed :one
-INSERT INTO feeds (id, url, name, user_id)
-VALUES ($1, $2, $3, $4)
-RETURNING id, created_at, updated_at, name, url, user_id
+INSERT INTO feeds (id, created_at, updated_at, name, url, user_id)
+VALUES ($1, NOW(), NOW(), $2, $3, $4)
+    RETURNING id, created_at, updated_at, name, url, user_id
 `
 
 type CreateFeedParams struct {
 	ID     uuid.UUID
-	Url    string
 	Name   string
+	Url    string
 	UserID uuid.UUID
 }
 
 func (q *Queries) CreateFeed(ctx context.Context, arg CreateFeedParams) (Feed, error) {
 	row := q.db.QueryRowContext(ctx, createFeed,
 		arg.ID,
-		arg.Url,
 		arg.Name,
+		arg.Url,
 		arg.UserID,
 	)
 	var i Feed
@@ -50,6 +50,39 @@ DELETE FROM feeds WHERE id = $1
 func (q *Queries) DeleteFeed(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.ExecContext(ctx, deleteFeed, id)
 	return err
+}
+
+const getAllFeedsWithUser = `-- name: GetAllFeedsWithUser :many
+SELECT feeds.name AS feed_name, feeds.url, users.name AS user_name FROM feeds INNER JOIN users on feeds.user_id = users.id
+`
+
+type GetAllFeedsWithUserRow struct {
+	FeedName string
+	Url      string
+	UserName string
+}
+
+func (q *Queries) GetAllFeedsWithUser(ctx context.Context) ([]GetAllFeedsWithUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllFeedsWithUser)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAllFeedsWithUserRow
+	for rows.Next() {
+		var i GetAllFeedsWithUserRow
+		if err := rows.Scan(&i.FeedName, &i.Url, &i.UserName); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getFeedByID = `-- name: GetFeedByID :one

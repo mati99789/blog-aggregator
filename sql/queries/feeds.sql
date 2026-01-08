@@ -5,9 +5,9 @@ SELECT * FROM feeds;
 SELECT * FROM feeds WHERE id = $1;
 
 -- name: CreateFeed :one
-INSERT INTO feeds (id, url, name, user_id)
-VALUES ($1, $2, $3, $4)
-RETURNING *;
+INSERT INTO feeds (id, created_at, updated_at, name, url, user_id)
+VALUES ($1, NOW(), NOW(), $2, $3, $4)
+    RETURNING *;
 
 -- name: UpdateFeed :one
 UPDATE feeds
@@ -20,3 +20,7 @@ RETURNING *;
 
 -- name: DeleteFeed :exec
 DELETE FROM feeds WHERE id = $1;
+
+
+-- name: GetAllFeedsWithUser :many
+SELECT feeds.name AS feed_name, feeds.url, users.name AS user_name FROM feeds INNER JOIN users on feeds.user_id = users.id;

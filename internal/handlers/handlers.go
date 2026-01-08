@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -102,6 +103,51 @@ func HandlerAggregate(s *state.State, cmd cli.Command) error {
 	}
 
 	fmt.Println(ressFeed)
+
+	return nil
+}
+
+func HandlerAddFeed(s *state.State, cmd cli.Command) error {
+	user, err := s.Db.GetUser(context.Background(), s.Config.CurrentUserName)
+	if err != nil {
+		return err
+	}
+
+	if len(cmd.Args) == 0 || len(cmd.Args) == 1 {
+		return errors.New("add feed requires at least two argument")
+	}
+
+	nameRss := cmd.Args[0]
+	urlRss := strings.ToLower(cmd.Args[1])
+
+	createdFeed, err := s.Db.CreateFeed(context.Background(), database.CreateFeedParams{
+		ID:     uuid.New(),
+		Name:   nameRss,
+		Url:    urlRss,
+		UserID: user.ID,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Created feed: %s\n", createdFeed.Name)
+
+	fmt.Printf("Adding feed: %s\n", nameRss)
+	return nil
+}
+
+func HandlerListFeeds(s *state.State, cmd cli.Command) error {
+	feeds, err := s.Db.GetAllFeedsWithUser(context.Background())
+	if err != nil {
+		return err
+	}
+
+	for _, feed := range feeds {
+		fmt.Println(feed.FeedName)
+		fmt.Println(feed.Url)
+		fmt.Println(feed.UserName)
+	}
 
 	return nil
 }
