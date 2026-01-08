@@ -1,8 +1,11 @@
 package main
 
 import (
-	"blog_eggregator/internal/config"
-	"blog_eggregator/internal/database"
+	"blog_aggregator/internal/cli"
+	"blog_aggregator/internal/config"
+	"blog_aggregator/internal/database"
+	"blog_aggregator/internal/handlers"
+	"blog_aggregator/internal/state"
 	"database/sql"
 	"fmt"
 	"log"
@@ -26,11 +29,14 @@ func main() {
 
 	dbQueries := database.New(db)
 
-	state := NewState(cfg, dbQueries)
-	cmds := NewCommands()
+	state := state.NewState(cfg, dbQueries)
+	cmds := cli.NewCommands()
 
-	cmds.register("login", handlerLogin)
-	cmds.register("register", handlerRegister)
+	cmds.Register("login", handlers.HandlerLogin)
+	cmds.Register("register", handlers.HandlerRegister)
+	cmds.Register("reset", handlers.HandlerReset)
+	cmds.Register("users", handlers.HandlerListUsers)
+	cmds.Register("agg", handlers.HandlerAggregate)
 
 	if len(os.Args) < 2 {
 		fmt.Fprintln(os.Stderr, "Usage: gator <command> [args...]")
@@ -41,12 +47,12 @@ func main() {
 	cmdName := os.Args[1]
 	args := os.Args[2:]
 
-	cmd := Command{
+	cmd := cli.Command{
 		Name: cmdName,
 		Args: args,
 	}
 
-	if err := cmds.run(state, cmd); err != nil {
+	if err := cmds.Run(state, cmd); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

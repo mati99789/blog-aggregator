@@ -1,8 +1,8 @@
-package main
+package state
 
 import (
-	"blog_eggregator/internal/config"
-	"blog_eggregator/internal/database"
+	"blog_aggregator/internal/config"
+	"blog_aggregator/internal/database"
 )
 
 type State struct {

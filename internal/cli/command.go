@@ -1,6 +1,7 @@
-package main
+package cli
 
 import (
+	"blog_aggregator/internal/state"
 	"errors"
 	"fmt"
 	"strings"
@@ -10,7 +11,7 @@ type Commands struct {
 	commands map[string]CommandHandler
 }
 
-type CommandHandler func(*State, Command) error
+type CommandHandler func(*state.State, Command) error
 
 type Command struct {
 	Name string
@@ -23,7 +24,7 @@ func NewCommands() *Commands {
 	}
 }
 
-func (c *Commands) run(s *State, cmd Command) error {
+func (c *Commands) Run(s *state.State, cmd Command) error {
 	name := strings.ToLower(cmd.Name)
 
 	handler, ok := c.commands[name]
@@ -34,7 +35,7 @@ func (c *Commands) run(s *State, cmd Command) error {
 	return handler(s, cmd)
 }
 
-func (c *Commands) register(name string, f CommandHandler) error {
+func (c *Commands) Register(name string, f CommandHandler) error {
 	if name == "" {
 		errors.New("command must have a name")
 	}
