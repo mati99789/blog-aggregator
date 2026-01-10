@@ -199,17 +199,14 @@ func HandlerFollowing(s *state.State, cmd cli.Command, user database.User) error
 }
 
 func HandlerUnfollow(s *state.State, cmd cli.Command, user database.User) error {
-	feed, err := s.Db.GetFeedByUrl(context.Background(), cmd.Args[0])
-	if err != nil {
-		return err
+	if len(cmd.Args) == 0 || len(cmd.Args) == 1 {
+		return errors.New("add feed requires at least two argument")
 	}
 
-	arg := database.UnfollowFeedParams{
-		FeedID: feed.ID,
+	err := s.Db.UnfollowFeed(context.Background(), database.UnfollowFeedParams{
 		UserID: user.ID,
-	}
-
-	err = s.Db.UnfollowFeed(context.Background(), arg)
+		Url:    cmd.Args[0],
+	})
 	if err != nil {
 		return err
 	}
