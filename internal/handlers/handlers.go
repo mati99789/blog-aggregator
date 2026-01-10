@@ -107,11 +107,7 @@ func HandlerAggregate(s *state.State, cmd cli.Command) error {
 	return nil
 }
 
-func HandlerAddFeed(s *state.State, cmd cli.Command) error {
-	user, err := s.Db.GetUser(context.Background(), s.Config.CurrentUserName)
-	if err != nil {
-		return err
-	}
+func HandlerAddFeed(s *state.State, cmd cli.Command, user database.User) error {
 
 	if len(cmd.Args) == 0 || len(cmd.Args) == 1 {
 		return errors.New("add feed requires at least two argument")
@@ -127,6 +123,16 @@ func HandlerAddFeed(s *state.State, cmd cli.Command) error {
 		UserID: user.ID,
 	})
 
+	if err != nil {
+		return err
+	}
+
+	_, err = s.Db.CreateFeedFollow(context.Background(), database.CreateFeedFollowParams{
+		ID:        uuid.New(),
+		UserID:    user.ID,
+		FeedID:    createdFeed.ID,
+		UpdatedAt: time.Now(),
+	})
 	if err != nil {
 		return err
 	}
@@ -147,6 +153,65 @@ func HandlerListFeeds(s *state.State, cmd cli.Command) error {
 		fmt.Println(feed.FeedName)
 		fmt.Println(feed.Url)
 		fmt.Println(feed.UserName)
+	}
+
+	return nil
+}
+
+func HandlerFollow(s *state.State, cmd cli.Command, user database.User) error {
+	feed, err := s.Db.GetFeedByUrl(context.Background(), cmd.Args[0])
+	if err != nil {
+		return err
+	}
+
+	createdFeedFollow, err := s.Db.CreateFeedFollow(context.Background(), database.CreateFeedFollowParams{
+		ID:     uuid.New(),
+		FeedID: feed.ID,
+		UserID: user.ID,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Created feed follow: %s and user name: %s\n", createdFeedFollow.FeedName, createdFeedFollow.UserName)
+
+	return nil
+}
+
+func HandlerFollowing(s *state.State, cmd cli.Command, user database.User) error {
+	feedFollows, err := s.Db.GetFeedFollowsForUser(context.Background(), user.Name)
+	if err != nil {
+		return err
+	}
+
+	if len(feedFollows) == 0 {
+		fmt.Println("No feeds found for this user.")
+		return nil
+	}
+
+	fmt.Printf("Feeds followed by %s:\n", s.Config.CurrentUserName)
+	for _, follow := range feedFollows {
+		fmt.Printf("* %s\n", follow.FeedName)
+	}
+
+	return nil
+}
+
+func HandlerUnfollow(s *state.State, cmd cli.Command, user database.User) error {
+	feed, err := s.Db.GetFeedByUrl(context.Background(), cmd.Args[0])
+	if err != nil {
+		return err
+	}
+
+	arg := database.UnfollowFeedParams{
+		FeedID: feed.ID,
+		UserID: user.ID,
+	}
+
+	err = s.Db.UnfollowFeed(context.Background(), arg)
+	if err != nil {
+		return err
 	}
 
 	return nil

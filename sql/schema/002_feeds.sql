@@ -1,5 +1,5 @@
 -- +goose up
-create table feeds (
+CREATE TABLE feeds (
 	id uuid PRIMARY KEY,
 	created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
 	updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
@@ -9,4 +9,4 @@ create table feeds (
 );
 
 -- +goose down
-drop table feeds;
+DROP TABLE feeds;

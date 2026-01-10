@@ -14,7 +14,7 @@ import (
 const createFeed = `-- name: CreateFeed :one
 INSERT INTO feeds (id, created_at, updated_at, name, url, user_id)
 VALUES ($1, NOW(), NOW(), $2, $3, $4)
-    RETURNING id, created_at, updated_at, name, url, user_id
+RETURNING id, created_at, updated_at, name, url, user_id
 `
 
 type CreateFeedParams struct {
@@ -44,7 +44,9 @@ func (q *Queries) CreateFeed(ctx context.Context, arg CreateFeedParams) (Feed, e
 }
 
 const deleteFeed = `-- name: DeleteFeed :exec
-DELETE FROM feeds WHERE id = $1
+DELETE
+FROM feeds
+WHERE id = $1
 `
 
 func (q *Queries) DeleteFeed(ctx context.Context, id uuid.UUID) error {
@@ -53,7 +55,9 @@ func (q *Queries) DeleteFeed(ctx context.Context, id uuid.UUID) error {
 }
 
 const getAllFeedsWithUser = `-- name: GetAllFeedsWithUser :many
-SELECT feeds.name AS feed_name, feeds.url, users.name AS user_name FROM feeds INNER JOIN users on feeds.user_id = users.id
+SELECT feeds.name AS feed_name, feeds.url, users.name AS user_name
+FROM feeds
+         INNER JOIN users on feeds.user_id = users.id
 `
 
 type GetAllFeedsWithUserRow struct {
@@ -86,7 +90,9 @@ func (q *Queries) GetAllFeedsWithUser(ctx context.Context) ([]GetAllFeedsWithUse
 }
 
 const getFeedByID = `-- name: GetFeedByID :one
-SELECT id, created_at, updated_at, name, url, user_id FROM feeds WHERE id = $1
+SELECT id, created_at, updated_at, name, url, user_id
+FROM feeds
+WHERE id = $1
 `
 
 func (q *Queries) GetFeedByID(ctx context.Context, id uuid.UUID) (Feed, error) {
@@ -103,8 +109,27 @@ func (q *Queries) GetFeedByID(ctx context.Context, id uuid.UUID) (Feed, error) {
 	return i, err
 }
 
+const getFeedByUrl = `-- name: GetFeedByUrl :one
+SELECT id, created_at, updated_at, name, url, user_id FROM feeds WHERE url = $1
+`
+
+func (q *Queries) GetFeedByUrl(ctx context.Context, url string) (Feed, error) {
+	row := q.db.QueryRowContext(ctx, getFeedByUrl, url)
+	var i Feed
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.Url,
+		&i.UserID,
+	)
+	return i, err
+}
+
 const getFeeds = `-- name: GetFeeds :many
-SELECT id, created_at, updated_at, name, url, user_id FROM feeds
+SELECT id, created_at, updated_at, name, url, user_id
+FROM feeds
 `
 
 func (q *Queries) GetFeeds(ctx context.Context) ([]Feed, error) {
@@ -139,9 +164,8 @@ func (q *Queries) GetFeeds(ctx context.Context) ([]Feed, error) {
 
 const updateFeed = `-- name: UpdateFeed :one
 UPDATE feeds
-SET
-    url = $1,
-    name = $2,
+SET url        = $1,
+    name       = $2,
     updated_at = NOW()
 WHERE id = $3
 RETURNING id, created_at, updated_at, name, url, user_id

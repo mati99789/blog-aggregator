@@ -5,6 +5,7 @@ import (
 	"blog_aggregator/internal/config"
 	"blog_aggregator/internal/database"
 	"blog_aggregator/internal/handlers"
+	"blog_aggregator/internal/middleware"
 	"blog_aggregator/internal/state"
 	"database/sql"
 	"fmt"
@@ -37,8 +38,11 @@ func main() {
 	cmds.Register("reset", handlers.HandlerReset)
 	cmds.Register("users", handlers.HandlerListUsers)
 	cmds.Register("agg", handlers.HandlerAggregate)
-	cmds.Register("addfeed", handlers.HandlerAddFeed)
+	cmds.Register("addfeed", middleware.MiddlewareLoggedIn(handlers.HandlerAddFeed))
 	cmds.Register("feeds", handlers.HandlerListFeeds)
+	cmds.Register("follow", middleware.MiddlewareLoggedIn(handlers.HandlerFollow))
+	cmds.Register("following", middleware.MiddlewareLoggedIn(handlers.HandlerFollowing))
+	cmds.Register("unfollow", middleware.MiddlewareLoggedIn(handlers.HandlerUnfollow))
 
 	if len(os.Args) < 2 {
 		fmt.Fprintln(os.Stderr, "Usage: gator <command> [args...]")
